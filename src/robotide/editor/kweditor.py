@@ -135,7 +135,6 @@ class KeywordEditor(GridEditor, RideEventHandler):
         finally:
             self._updating_namespace = False
 
-
     def _set_cells(self):
         col_size = self.settings.get("col size", 175)
         max_col_size = self.settings.get("max col size", 380)
@@ -147,6 +146,10 @@ class KeywordEditor(GridEditor, RideEventHandler):
         self.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
         self.SetColLabelSize(0)
         self.SetDefaultColSize(col_size, resizeExistingCols=True)
+        if auto_col_size:
+            self.Bind(grid.EVT_GRID_CMD_COL_SIZE, self.OnCellColSizeChanged)
+        else:
+            self.Unbind(grid.EVT_GRID_CMD_COL_SIZE)
         if word_wrap:
             self.SetDefaultRowSize(wx.grid.GRID_AUTOSIZE)
         self.SetDefaultCellOverflow(False)  # DEBUG
@@ -196,15 +199,15 @@ class KeywordEditor(GridEditor, RideEventHandler):
         '''Redraw the colors if the color settings are modified'''
         section, setting = data.keys
         if section == 'Grid':
-            if 'text' in setting or 'background' in setting:
-                self._colorize_grid()
-            elif 'font' in setting:
+            if 'font' in setting:
                 self._set_fonts(update_cells=True)
             elif ('col size' in setting
                   or 'max col size' in setting
-                  or 'auto size cols' in setting):
+                  or 'auto size cols' in setting
+                  or 'word wrap' in setting):
                 self._set_cells()
-                self.ForceRefresh()
+            self._colorize_grid()
+            self.autosize()
 
     def OnSelectCell(self, event):
         self._cell_selected = True
@@ -355,6 +358,7 @@ class KeywordEditor(GridEditor, RideEventHandler):
         self.ClearGrid()
         self._write_data(data, update_history=False)
         self._colorize_grid()
+        self.autosize()
 
     def _write_headers(self, controller):
         headers = controller.data.parent.header[1:]
@@ -376,7 +380,11 @@ class KeywordEditor(GridEditor, RideEventHandler):
             self._parent.highlight(selection_content, expand=False)
 
     def highlight(self, text, expand=True):
-        self._colorizer.colorize(text)
+        wx.CallAfter(self._colorizer.colorize, text)
+
+    def autosize(self):
+        wx.CallAfter(self.AutoSizeColumns, False)
+        wx.CallAfter(self.AutoSizeRows, False)
 
     def _get_single_selection_content_or_none_on_first_call(self):
         if self._cell_selected:
@@ -679,6 +687,10 @@ work.</li>
 
     def OnSelectAll(self, event):
         self.SelectAll()
+
+    def OnCellColSizeChanged(self, event):
+        wx.CallAfter(self.AutoSizeRows, False)
+        event.Skip()
 
     def OnCellLeftClick(self, event):
         self._tooltips.hide()

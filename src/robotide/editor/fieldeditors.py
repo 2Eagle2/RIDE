@@ -225,7 +225,6 @@ class _EditorGrid(GridEditor):
             row, col = divmod(index, self.NumberCols)
             self.write_cell(row, col, item, False)
         self.EndBatch()
-        self.AutoSizeRows()
 
     def get_value(self):
         value = []
