@@ -59,12 +59,9 @@ class CellRenderer(wx.grid.GridCellRenderer):
         dc.SetFont(_font)
 
         if len(text) == 0:
-            return dc.GetTextExtent("  ")  # self.default_width
+            return dc.GetTextExtent("__")  # self.default_width
 
-        w, h = dc.GetTextExtent(text + " ")
-
-        if self.auto_fit:
-            suggest_width = grid.GetColSize(col)
+        w, h = dc.GetTextExtent(text + "__")
 
         if self.word_wrap:
             if self.auto_fit:
