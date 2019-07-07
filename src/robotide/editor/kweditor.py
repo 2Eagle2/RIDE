@@ -47,6 +47,7 @@ from .editordialogs import UserKeywordNameDialog, ScalarVariableDialog, \
 from .contentassist import ExpandingContentAssistTextCtrl
 from .gridcolorizer import Colorizer
 from robotide.utils import PY3
+from robotide.lib.robot.utils.compat import with_metaclass
 
 if PY3:
     from robotide.utils import basestring, unicode, unichr
@@ -77,8 +78,7 @@ def requires_focus(function):
 from robotide.utils.noconflict import classmaker
 
 
-class KeywordEditor(GridEditor, RideEventHandler):
-    __metaclass__ = classmaker()
+class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
     _no_cell = (-1, -1)
     _popup_menu_shown = False
     dirty = property(lambda self: self._controller.dirty)
@@ -146,11 +146,16 @@ class KeywordEditor(GridEditor, RideEventHandler):
             CellRenderer(col_size, max_col_size, auto_col_size, word_wrap))
         self.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
         self.SetColLabelSize(0)
-        self.SetDefaultColSize(col_size, resizeExistingCols=True)
+        if not auto_col_size and not word_wrap:
+            self.SetDefaultColSize(col_size, resizeExistingCols=True)
+        else:
+            self.SetDefaultColSize(wx.grid.GRID_AUTOSIZE, resizeExistingCols=True)
+
         if auto_col_size:
             self.Bind(grid.EVT_GRID_CMD_COL_SIZE, self.OnCellColSizeChanged)
         else:
             self.Unbind(grid.EVT_GRID_CMD_COL_SIZE)
+
         if word_wrap:
             self.SetDefaultRowSize(wx.grid.GRID_AUTOSIZE)
         self.SetDefaultCellOverflow(False)  # DEBUG
@@ -404,6 +409,8 @@ class KeywordEditor(GridEditor, RideEventHandler):
 
     def cell_value_edited(self, row, col, value):
         self._execute(ChangeCellValue(row, col, value))
+        wx.CallAfter(self.AutoSizeColumn, col, False)
+        wx.CallAfter(self.AutoSizeRow, row, False)
 
     def get_selected_datafile_controller(self):
         return self._controller.datafile_controller
@@ -551,18 +558,23 @@ class KeywordEditor(GridEditor, RideEventHandler):
             self.OnUndo(event)
         elif keycode == ord('A') and control_down:
             self.OnSelectAll(event)
+        elif keycode == ord('F') and control_down:
+            # print("DEBUG: captured Control-F\n")
+            if not self.has_focus():
+                self.SetFocus()  # DEBUG Avoiding Search field on Text Edit
         elif event.AltDown() and keycode in [wx.WXK_DOWN, wx.WXK_UP]:
             self._move_rows(keycode)
             event.Skip()
         elif event.AltDown() and keycode == wx.WXK_RETURN:
             self._move_cursor_down(event)
-            event.Skip()
+            # event.Skip()
         elif keycode == wx.WXK_WINDOWS_MENU:
             self.OnCellRightClick(event)
         elif keycode in [wx.WXK_RETURN, wx.WXK_BACK]:
             if _iscelleditcontrolshown:
                 self.save()
-            event.Skip()
+            self._move_grid_cursor(event, keycode)
+            # event.Skip()
         elif (control_down or event.AltDown()) and \
                 keycode == wx.WXK_SPACE:  # Avoid Mac CMD
             self._open_cell_editor_with_content_assist()
@@ -923,9 +935,9 @@ class ContentAssistCellEditor(GridCellEditor):  # DEBUG wxPhoenix PyGridCellEdi
         self._tc.SetValue(self._original_value)
         self._grid = grid
         self._tc.SetInsertionPointEnd()
-        self._tc.SetFocus()
+        # self._tc.SetFocus()  # On Win 10 this breaks cell text selection
         # For this example, select the text   # DEBUG nov_2017
-        self._tc.SetSelection(0, self._tc.GetLastPosition())
+        # self._tc.SetSelection(0, self._tc.GetLastPosition())
 
     def EndEdit(self, row, col, grid, *ignored):
         value = self._get_value()
