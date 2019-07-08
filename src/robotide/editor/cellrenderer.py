@@ -87,26 +87,33 @@ class CellRenderer(wx.grid.GridCellRenderer):
         text = grid.GetCellValue(row, col)
         dc.SetFont(attr.GetFont())
 
-        w, h = dc.GetTextExtent('00')  # use 2 digits for size reference
         if self.auto_fit:
-            grid.SetRowMinimalAcceptableHeight(h+h/2)
-            grid.SetColMinimalAcceptableWidth(w+w/2)
+            w, h = dc.GetTextExtent('00')  # use 2 digits for size reference
+            grid.SetRowMinimalAcceptableHeight(h + h / 2)
+            grid.SetColMinimalAcceptableWidth(w + w / 2)
+
+        if len(text) == 0:
+            return dc.GetTextExtent('00')  # use 2 digits for size reference
 
         w, h = dc.GetTextExtent(text)
-        if self.auto_fit:
-            col_width = min(w, self.max_width)
-        else:
-            col_width = min(w, self.default_width)
 
         if self.word_wrap:
-            suggest_width = max(grid.GetColSize(col), col_width)
+            if self.auto_fit:
+                col_width = min(w, self.max_width)
+                suggest_width = grid.GetColSize(col)
+            else:
+                col_width = self.default_width
+                suggest_width = col_width
             text = self._wordwrap(text, suggest_width, dc, breakLongWords=False)
             w, h = dc.GetMultiLineTextExtent(text)
+            row_height = h
+        else:
+            row_height = h
             if self.auto_fit:
-                col_width = min(w, col_width)
+                col_width = min(w, self.max_width)
             else:
-                col_width = min(w, self.default_width)
-        row_height = h
+                col_width = min(w, grid.GetColSize(col))
+
         return wx.Size(col_width, row_height)
 
     def Clone(self):  # real signature unknown; restored from __doc__
