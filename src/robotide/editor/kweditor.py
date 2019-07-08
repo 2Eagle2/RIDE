@@ -113,6 +113,7 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
         self._marked_cell = None
         self._make_bindings()
         self._write_steps(self._controller)
+        self._colorizer.colorize(None)
         self.autosize()
         self._tree = tree
         self._has_been_clicked = False
@@ -138,6 +139,7 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
             self._updating_namespace = False
 
     def _resize_grid(self, event=None):
+        self._colorizer.colorize(None)
         if self.settings.get("auto size cols", True):
             self.AutoSizeColumns(False)
         if self.settings.get("word wrap", True):
@@ -221,8 +223,9 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
                   or 'auto size cols' in setting
                   or 'word wrap' in setting):
                 self._set_cells()
-            self.autosize()
             self._colorize_grid()
+            self.autosize()
+
 
     def OnSelectCell(self, event):
         self._cell_selected = True
