@@ -158,6 +158,10 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
 
         if auto_col_size:
             self.SetDefaultColSize(wx.grid.GRID_AUTOSIZE, resizeExistingCols=True)
+            font = self.GetDefaultCellFont()
+            w, h = font.GetPixelSize()
+            self.SetRowMinimalAcceptableHeight(h + h / 2)
+            self.SetColMinimalAcceptableWidth(w + w / 2)
         else:
             self.SetDefaultColSize(col_size, resizeExistingCols=True)
             self.SetColMinimalAcceptableWidth(col_size)
@@ -172,10 +176,10 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
         self.SetDefaultCellOverflow(False)  # DEBUG
 
     def _configure_grid(self):
+        self._set_fonts()
         self._set_cells()
         self.SetDefaultEditor(
             ContentAssistCellEditor(self._plugin, self._controller))
-        self._set_fonts()
 
     def _set_fonts(self, update_cells=False):
         font_size = self.settings.get('font size', _DEFAULT_FONT_SIZE)
@@ -224,7 +228,7 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
                   or 'word wrap' in setting):
                 self._set_cells()
             self._colorize_grid()
-            self.autosize()
+            wx.CallAfter(self.autosize)
 
 
     def OnSelectCell(self, event):
@@ -408,8 +412,8 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
         wx.CallLater(100, self._colorizer.colorize, text)
 
     def autosize(self):
-        wx.CallAfter(self.AutoSizeColumns, False)
-        wx.CallAfter(self.AutoSizeRows, False)
+        self.AutoSizeColumns(False)
+        self.AutoSizeRows(False)
 
     def _get_single_selection_content_or_none_on_first_call(self):
         if self._cell_selected:

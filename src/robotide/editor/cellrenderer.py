@@ -84,16 +84,13 @@ class CellRenderer(wx.grid.GridCellRenderer):
         """The width will be between values `col size` and `max col size`
         These can be changed in user preferences.
         """
-        text = grid.GetCellValue(row, col)
-        dc.SetFont(attr.GetFont())
 
-        if self.auto_fit:
-            w, h = dc.GetTextExtent('00')  # use 2 digits for size reference
-            grid.SetRowMinimalAcceptableHeight(h + h / 2)
-            grid.SetColMinimalAcceptableWidth(w + w / 2)
+        text = grid.GetCellValue(row, col)
 
         if len(text) == 0:
-            return dc.GetTextExtent('00')  # use 2 digits for size reference
+            return 0, 0
+
+        dc.SetFont(attr.GetFont())
 
         w, h = dc.GetTextExtent(text)
 
