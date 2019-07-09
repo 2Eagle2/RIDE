@@ -158,8 +158,9 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
 
         if auto_col_size:
             self.SetDefaultColSize(wx.grid.GRID_AUTOSIZE, resizeExistingCols=True)
-            font = self.GetDefaultCellFont()
-            w, h = font.GetPixelSize()
+            dc = wx.ScreenDC()
+            dc.SetFont(self.GetDefaultCellFont())
+            w, h = dc.GetTextExtent("00")
             self.SetRowMinimalAcceptableHeight(h + h / 2)
             self.SetColMinimalAcceptableWidth(w + w / 2)
         else:
