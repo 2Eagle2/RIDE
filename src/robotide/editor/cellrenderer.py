@@ -30,7 +30,8 @@ class CellRenderer(wx.grid.GridCellRenderer):
         self.auto_fit = auto_fit
         self.word_wrap = word_wrap
 
-    def _wordwrap(self, text, width, dc, breakLongWords=True, margin=0):
+    @staticmethod
+    def wordwrap(text, width, dc, breakLongWords=True, margin=0):
         ''' modification of original wordwrap function without extra space'''
         wrapped_lines = []
         text = text.split('\n')
@@ -65,7 +66,7 @@ class CellRenderer(wx.grid.GridCellRenderer):
         text = grid.GetCellValue(row, col)
         dc.SetFont(attr.GetFont())
         suggest_width = grid.GetColSize(col)
-        text = self._wordwrap(text, suggest_width, dc, breakLongWords=False)
+        text = self.wordwrap(text, suggest_width, dc, breakLongWords=False)
         hAlign, vAlign = attr.GetAlignment()
         if isSelected:
             bg = grid.GetSelectionBackground()
@@ -101,7 +102,7 @@ class CellRenderer(wx.grid.GridCellRenderer):
             else:
                 col_width = self.default_width
                 suggest_width = col_width
-            text = self._wordwrap(text, suggest_width, dc, breakLongWords=False)
+            text = self.wordwrap(text, suggest_width, dc, breakLongWords=False)
             w, h = dc.GetMultiLineTextExtent(text)
             row_height = h
         else:

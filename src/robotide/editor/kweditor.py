@@ -180,7 +180,7 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
         self._set_fonts()
         self._set_cells()
         self.SetDefaultEditor(
-            ContentAssistCellEditor(self._plugin, self._controller))
+            ContentAssistCellEditor(self._plugin, self._controller, self.GetDefaultCellFont()))
 
     def _set_fonts(self, update_cells=False):
         font_size = self.settings.get('font size', _DEFAULT_FONT_SIZE)
@@ -556,8 +556,6 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
 
     def OnEditor(self, event):
         self._tooltips.hide()
-        row_height = self.GetRowSize(self.selection.topleft.row)
-        self.GetCellEditor(*self.selection.cell) #.SetHeight(row_height*2)
         event.Skip()
 
     def _move_cursor_down(self, event):
@@ -924,7 +922,7 @@ work.</li>
 
 class ContentAssistCellEditor(GridCellEditor):  # DEBUG wxPhoenix PyGridCellEdi
 
-    def __init__(self, plugin, controller):
+    def __init__(self, plugin, controller, font):
         GridCellEditor.__init__(self)
         self._plugin = plugin
         self._controller = controller
@@ -932,6 +930,7 @@ class ContentAssistCellEditor(GridCellEditor):  # DEBUG wxPhoenix PyGridCellEdi
         self._original_value = None
         self._value = None
         self._tc = None
+        self._font = font
         self._counter = 0
 
     def show_content_assist(self, args=None):
@@ -949,19 +948,24 @@ class ContentAssistCellEditor(GridCellEditor):  # DEBUG wxPhoenix PyGridCellEdi
             self._tc.PushEventHandler(evthandler)
 
     def SetSize(self, rect):
+
+        dc = wx.ScreenDC()
+        dc.SetFont(self._font)
+        text = self._tc.GetValue()
+        font_w, font_h = dc.GetTextExtent("00")
+
+        new_text = CellRenderer.wordwrap(text,rect.width,dc)
+        editor_w, editor_h = dc.GetMultiLineTextExtent(new_text)
+
         if wx.VERSION >= (3, 0, 3, ''):  # DEBUG wxPhoenix
-            self._tc.SetSize(rect.x, rect.y, rect.width + 2, rect.height + 2,
+            self._tc.SetSize(rect.x, rect.y, rect.width + 2, editor_h + font_h/2,
                              wx.SIZE_ALLOW_MINUS_ONE)
         else:
-            self._tc.SetDimensions(rect.x, rect.y, rect.width + 2, rect.height
-                                   + 2, wx.SIZE_ALLOW_MINUS_ONE)
-
-    def SetHeight(self, height):
-        self._height = height
+            self._tc.SetDimensions(rect.x, rect.y, rect.width + 2, editor_h + font_h/2,
+                                   wx.SIZE_ALLOW_MINUS_ONE)
 
     def BeginEdit(self, row, col, grid):
         self._counter = 0
-        # self._tc.SetSize((-1, self._height))
         self._tc.set_row(row)
         self._original_value = grid.GetCellValue(row, col)
         self._tc.SetValue(self._original_value)
