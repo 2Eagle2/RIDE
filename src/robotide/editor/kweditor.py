@@ -557,7 +557,7 @@ class KeywordEditor(with_metaclass(classmaker(), GridEditor, RideEventHandler)):
     def OnEditor(self, event):
         self._tooltips.hide()
         row_height = self.GetRowSize(self.selection.topleft.row)
-        self.GetCellEditor(*self.selection.cell).SetHeight(row_height)
+        self.GetCellEditor(*self.selection.cell) #.SetHeight(row_height*2)
         event.Skip()
 
     def _move_cursor_down(self, event):
@@ -961,7 +961,7 @@ class ContentAssistCellEditor(GridCellEditor):  # DEBUG wxPhoenix PyGridCellEdi
 
     def BeginEdit(self, row, col, grid):
         self._counter = 0
-        self._tc.SetSize((-1, self._height))
+        # self._tc.SetSize((-1, self._height))
         self._tc.set_row(row)
         self._original_value = grid.GetCellValue(row, col)
         self._tc.SetValue(self._original_value)
